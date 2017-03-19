@@ -10,19 +10,23 @@ import glob
 from pylab import mpl
 mpl.rcParams['font.sans-serif'] = ['SimHei']
 
+#zhishi.me源数据的存储路径
 zhishime_data_dir = 'F:/KBs/zhishime/'
+
+#三个源预处理的结果的存放路径
 hudongbaike_dir = "D:/record_linkage/data/hudongbaike/"
 baidubaike_dir = "D:/record_linkage/data/baidubaike/"
 zhwiki_dir = "D:/record_linkage/data/zhwiki/"
+
+#复旦百科源数据的存储路径
 cndb_path = u"F:/KBs/cndbpediaDump/cndbpediaDump.txt"
 
-def encode_nt_file(file_path, new_file_dir, sub, pred, obj, is_gz=False):
+def encode_nt_file(file_path, new_file_dir, sub, pred, obj):
     '''
-    zhishi.me 解决原数据文件的编码问题,可以从gz压缩文件中直接读取
-    :param: sub, pred, obj: 指定原数据文件的中的编码格式，便于统一编码为utf-8
+    读取nt格式的文件，将里面的urlencode或者unicode编码的中文转化为utf-8,再写入新的nt文件
+    可以处理gz压缩文件和常规文件，但是不能处理rar压缩文件
+    :param: sub, pred, obj: 指定原数据文件中一行三个部分的编码格式
             'uni': unicode;  'url': urlencode
-    
-    :param: is_gz: 是否是gz格式的压缩文件; false意味着不是压缩文件
     '''
     new_file_dir = new_file_dir + "/" if new_file_dir[-1] != '/' else new_file_dir
     new_file_path = new_file_dir + os.path.basename(file_path).replace(".gz","")
@@ -30,6 +34,7 @@ def encode_nt_file(file_path, new_file_dir, sub, pred, obj, is_gz=False):
     funcs = {'url': lambda x: urllib.unquote(x), 
             'uni': lambda x: x.decode('unicode_escape').encode('utf-8')}
     
+    is_gz = file_path.endswith(".gz")
     f = gzip.GzipFile(file_path) if is_gz else open(file_path)
     count = 0
     for line in f:
@@ -52,6 +57,7 @@ def encode_nt_file(file_path, new_file_dir, sub, pred, obj, is_gz=False):
 def get_URI_base(URI, separator):
     '''
     获取URI末尾的有用部分，如中文内容，属性名称等
+    :param separator: 分隔符 / 或 # 或 None
     '''    
     URI = URI.strip()
     if separator == '/' or separator == "#":
@@ -66,8 +72,8 @@ def get_URI_base(URI, separator):
 
 def nt_to_triple(file_path, new_file_dir, sub, pred, obj, separators, need_pred=True):
     '''
-    从nt格式的文件转换到triple(tsv)格式
-    :param sub, pred, obj:  nt格式一个triple这三个部分是什么编码 url or unicode
+    从nt格式的文件转换到triple(tsv)格式,去掉http链接部分，提取出有效的中文部分
+    :param sub, pred, obj:  nt格式文件里一个triple这三个部分是什么编码 url or unicode
     :param separators: [-,-,-], 以上三个部分在URI中有效部分的分隔符, '/' or '#' or None
     :param need_pred: 是否需要该文件里的属性和属性值，还是只需要实体
     ''' 
@@ -189,6 +195,9 @@ def count_cndb_attrs(file_path, first_n=100):
     plt.show()
 
 def extract_hudongbaike():
+    '''
+    从hudongbaike数据中提取所有实体和部分有效的属性
+    '''
     hudong_dir = zhishime_data_dir + 'hudongbaike/'
     file_path = unicode(hudong_dir + '3.0_hudongbaike_infobox_properties_zh.nt.gz','utf-8')
     nt_to_triple(file_path,hudongbaike_dir,'url','url','uni',['/','/',None])
@@ -227,6 +236,9 @@ def extract_hudongbaike():
     nt_to_triple(file_path,hudongbaike_dir,'url','url','uni',['/','#',None]) 
 
 def extract_baidubaike():
+    '''
+    从baidubaike数据中提取所有实体和部分有效的属性
+    '''
     baidu_dir = zhishime_data_dir + 'baidubaike/'
 
     file_path = unicode(baidu_dir + '3.0_baidubaike_infobox_properties_zh.nt.gz','utf-8')
@@ -266,6 +278,9 @@ def extract_baidubaike():
     nt_to_triple(file_path,baidubaike_dir,'url','url','uni',['/','#',None]) 
 
 def extract_zhwiki():
+    '''
+    从zhwiki数据中提取所有实体和部分有效的属性
+    '''
     zhwiki = zhishime_data_dir + 'zhwiki/'
 
     file_path = unicode(zhwiki + '2.0_zhwiki_infobox_properties_zh.rar','utf-8')
@@ -314,6 +329,12 @@ def extract_zhwiki():
     nt_to_triple(file_path,zhwiki_dir,'url','url','url',['/','/',None], False)
 
 def combine_single_source(dir_name):
+    '''
+    合并单个源的所有单个预处理的结果文件
+    结果：
+    total.txt  tsv格式的实体，属性，属性值
+    attr.txt  tsv格式的属性 出现次数
+    '''
     files = glob.glob(dir_name + "*")
     entities = {}
     attrs = defaultdict(int)
