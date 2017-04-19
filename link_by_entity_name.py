@@ -151,14 +151,13 @@ def link_KB(KB_path1, KB_path2):
     print "total epoch1: ", epoch1
     print 'total epoch2: ', epoch2
 
-    for i in range(8, epoch1):
+    for i in range(0, epoch1):
 
         blocks1 = block_KB_part(KB_path1, i, first_two_letter)
 
-        for j in range(1, epoch2):
+        for j in range(0, epoch2):
             print "epoch1 ", i
             print "epoch2 ", j
-
             
             blocks2 = block_KB_part(KB_path2, j, first_two_letter)
             
