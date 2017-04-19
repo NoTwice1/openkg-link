@@ -8,13 +8,13 @@ import re
 #import time
 #import datetime
 import os
-
+import requests
 
 def get_html(url):
     request = urllib2.Request(url)
     request.add_header("User-Agent","Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/45.0.2454.101 Safari/537.36")
     html = urllib2.urlopen(request)
-    print html.getcode()
+    # print html.getcode()
     return html.read()
 
 
@@ -27,14 +27,15 @@ def fetch_kuaidaili():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//*[@id="index_free_list"]/table/tbody/tr')
         for line in range(10):
-            td_type = trs[line].xpath('td[4]/text()')[0]
-            if 'HTTPS' in td_type:  #判断是否为HTTPS代理，不是则不抓取
-                td_speed = trs[line].xpath('td[7]/text()')[0][:-1:]
-                if float(td_speed)<1.0:
-                    td_ip = trs[line].xpath('td[1]/text()')[0]
-                    td_port = trs[line].xpath('td[2]/text()')[0]
-                    ip = td_ip+':'+str(td_port)
-                    proxys.append(ip)
+            # td_type = trs[line].xpath('td[4]/text()')[0]
+            # if 'HTTPS' in td_type:  #判断是否为HTTPS代理，不是则不抓取
+
+            td_speed = trs[line].xpath('td[7]/text()')[0][:-1:]
+            if float(td_speed)<1.0:
+                td_ip = trs[line].xpath('td[1]/text()')[0]
+                td_port = trs[line].xpath('td[2]/text()')[0]
+                ip = td_ip+':'+str(td_port)
+                proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print('from kuaidaili...%s'%len(useFullIp))
     return useFullIp
@@ -49,14 +50,15 @@ def fetch_kxdaili():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//*[@id="nav_btn01"]/div[5]/table/tbody/tr')
         for line in range(len(trs)):
-            td_type = trs[line].xpath('td[4]/text()')[0]
-            if 'HTTPS' in td_type:  #判断是否为HTTPS代理，不是则不抓取
-                td_speed = trs[line].xpath('td[5]/text()')[0].split('.')[0]
-                if int(td_speed)<1:
-                    td_ip = trs[line].xpath('td[1]/text()')[0]
-                    td_port = trs[line].xpath('td[2]/text()')[0]
-                    ip = td_ip+':'+str(td_port)
-                    proxys.append(ip)
+            # td_type = trs[line].xpath('td[4]/text()')[0]
+            # if 'HTTPS' in td_type:  #判断是否为HTTPS代理，不是则不抓取
+
+            td_speed = trs[line].xpath('td[5]/text()')[0].split('.')[0]
+            if int(td_speed)<1:
+                td_ip = trs[line].xpath('td[1]/text()')[0]
+                td_port = trs[line].xpath('td[2]/text()')[0]
+                ip = td_ip+':'+str(td_port)
+                proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
 
     print('from kxdaili...%s'%len(useFullIp))
@@ -73,14 +75,15 @@ def fetch_yaoyaodaili():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//*[@id="list"]/table/tbody/tr')
         for line in range(len(trs)):
-            td_type = trs[line].xpath('td[4]/text()')[0]
-            if 'HTTPS' in td_type:
-                td_speed = trs[line].xpath('td[6]/text()')[0]
-                if '0秒' == td_speed:
-                    td_ip = trs[line].xpath('td[1]/text()')[0]
-                    td_port = trs[line].xpath('td[2]/text()')[0]
-                    ip = td_ip+':'+td_port
-                    proxys.append(ip)
+            # td_type = trs[line].xpath('td[4]/text()')[0]
+            # if 'HTTPS' in td_type:
+
+            td_speed = trs[line].xpath('td[6]/text()')[0]
+            if '0秒' == td_speed:
+                td_ip = trs[line].xpath('td[1]/text()')[0]
+                td_port = trs[line].xpath('td[2]/text()')[0]
+                ip = td_ip+':'+td_port
+                proxys.append(ip)
 
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print('from httpsdaili...%s'%len(useFullIp))
@@ -94,14 +97,14 @@ def fetch_xici():
     tables = html.xpath('//table[@id="ip_list"]')
     trs = tables[0].xpath('tr')
     for line in trs[1:]:
-        td_type = line.xpath('td[6]/text()')[0].strip()
-        if 'HTTPS' == td_type:
-            td_speed = line.xpath('td[7]/div/@title')[0].strip()[:-1]
-            if float(td_speed) < 5:
-                td_ip = line.xpath('td[2]/text()')[0].strip()
-                td_port = line.xpath('td[3]/text()')[0].strip()
-                ip = td_ip +':'+td_port
-                proxys.append(ip)
+        # td_type = line.xpath('td[6]/text()')[0].strip()
+        # if 'HTTPS' == td_type:
+        td_speed = line.xpath('td[7]/div/@title')[0].strip()[:-1]
+        if float(td_speed) < 5:
+            td_ip = line.xpath('td[2]/text()')[0].strip()
+            td_port = line.xpath('td[3]/text()')[0].strip()
+            ip = td_ip +':'+td_port
+            proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print "from xici ... %s"%len(useFullIp)
     return useFullIp
@@ -115,14 +118,14 @@ def fetch_nianshao():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//tr')
         for line in trs[1:]:
-            td_type = line.xpath('td[5]/text()')[0].strip()
-            if "HTTPS" == td_type:
-                td_speed = line.xpath('td[6]/div/div/@style')[0].strip()[6:8]
-                if int(td_speed)>=70:
-                    td_ip = line.xpath('td[1]/text()')[0].strip()
-                    td_port = line.xpath('td[2]/text()')[0].strip()
-                    ip = td_ip +":"+td_port
-                    proxys.append(ip)
+            # td_type = line.xpath('td[5]/text()')[0].strip()
+            # if "HTTPS" == td_type:
+            td_speed = line.xpath('td[6]/div/div/@style')[0].strip()[6:8]
+            if int(td_speed)>=70:
+                td_ip = line.xpath('td[1]/text()')[0].strip()
+                td_port = line.xpath('td[2]/text()')[0].strip()
+                ip = td_ip +":"+td_port
+                proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print "from nianshao ... %s"%len(useFullIp)
     print useFullIp
@@ -136,16 +139,16 @@ def fetch_swei360():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//tr')
         for line in trs[1:]:
-            td_type = line.xpath('td[4]/text()')[0].strip()
-            if "HTTPS" == td_type:
-                td_hide = line.xpath('td[3]/text()')[0].strip()
-                if u'高匿' in td_hide:
-                    td_speed = line.xpath('td[6]/text()')[0].strip()[:-1]
-                    if int(td_speed)<=5:
-                        td_ip = line.xpath('td[1]/text()')[0].strip()
-                        td_port = line.xpath('td[2]/text()')[0].strip()
-                        ip = td_ip +":"+td_port
-                        proxys.append(ip)
+            # td_type = line.xpath('td[4]/text()')[0].strip()
+            # if "HTTPS" == td_type:
+            td_hide = line.xpath('td[3]/text()')[0].strip()
+            if u'高匿' in td_hide:
+                td_speed = line.xpath('td[6]/text()')[0].strip()[:-1]
+                if int(td_speed)<=5:
+                    td_ip = line.xpath('td[1]/text()')[0].strip()
+                    td_port = line.xpath('td[2]/text()')[0].strip()
+                    ip = td_ip +":"+td_port
+                    proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print "from swei360 ... %s"%len(useFullIp)
     return useFullIp
@@ -159,14 +162,14 @@ def fetch_ip3366():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//tr')
         for line in trs[1:]:
-            td_type = line.xpath('td[4]/text()')[0].strip()
-            if "HTTPS" == td_type:
-                td_speed = line.xpath('td[6]/text()')[0].strip()[:-1]
-                if int(td_speed)<=5:
-                    td_ip = line.xpath('td[1]/text()')[0].strip()
-                    td_port = line.xpath('td[2]/text()')[0].strip()
-                    ip = td_ip+":"+td_port
-                    proxys.append(ip)
+            # td_type = line.xpath('td[4]/text()')[0].strip()
+            # if "HTTPS" == td_type:
+            td_speed = line.xpath('td[6]/text()')[0].strip()[:-1]
+            if int(td_speed)<=5:
+                td_ip = line.xpath('td[1]/text()')[0].strip()
+                td_port = line.xpath('td[2]/text()')[0].strip()
+                ip = td_ip+":"+td_port
+                proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print "from ip3366 ...%s"%len(useFullIp)
     return useFullIp
@@ -180,14 +183,14 @@ def fetch_mimiip():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//tr')
         for line in trs[1:]:
-            td_type = line.xpath('td[5]/text()')[0].strip()
-            if "HTTPS" == td_type:
-                td_speed = line.xpath('td[6]/div/@style')[0].strip()[6:-2]
-                if int(td_speed)>=70:
-                    td_ip = line.xpath('td[1]/text()')[0].strip()
-                    td_port = line.xpath('td[2]/text()')[0].strip()
-                    ip = td_ip+":"+td_port
-                    proxys.append(ip)
+            # td_type = line.xpath('td[5]/text()')[0].strip()
+            # if "HTTPS" == td_type:
+            td_speed = line.xpath('td[6]/div/@style')[0].strip()[6:-2]
+            if int(td_speed)>=70:
+                td_ip = line.xpath('td[1]/text()')[0].strip()
+                td_port = line.xpath('td[2]/text()')[0].strip()
+                ip = td_ip+":"+td_port
+                proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print "from mimiip ...%s"%len(useFullIp)
     return useFullIp
@@ -201,14 +204,14 @@ def fetch_ip84():
         html = etree.HTML(get_html(url))
         trs = html.xpath('//tr')
         for line in trs[1:]:
-            td_type = line.xpath('td[5]/text()')[0].strip()
-            if "HTTPS" == td_type:
-                td_speed = line.xpath('td[6]/text()')[0].strip()[:-1]
-                if int(td_speed)<=5:
-                    td_ip = line.xpath('td[1]/text()')[0].strip()
-                    td_port = line.xpath('td[2]/text()')[0].strip()
-                    ip = td_ip+":"+td_port
-                    proxys.append(ip)
+            # td_type = line.xpath('td[5]/text()')[0].strip()
+            # if "HTTPS" == td_type:
+            td_speed = line.xpath('td[6]/text()')[0].strip()[:-1]
+            if int(td_speed)<=5:
+                td_ip = line.xpath('td[1]/text()')[0].strip()
+                td_port = line.xpath('td[2]/text()')[0].strip()
+                ip = td_ip+":"+td_port
+                proxys.append(ip)
     useFullIp = testIp(map(lambda x:x.strip(),proxys))
     print "from ip84 ...%s"%len(useFullIp)
     return useFullIp
@@ -234,27 +237,12 @@ def fetch_fangfaboke():
         "https://seofangfa.com/proxy/2017-04-17.html",
         "https://seofangfa.com/proxy/2017-04-14.html",
         "https://seofangfa.com/proxy/2017-04-13.html",
-        "https://seofangfa.com/proxy/2017-04-01.html",
-        "https://seofangfa.com/proxy/2017-03-30.html",
-        "https://seofangfa.com/proxy/2017-03-29.html",
-        "https://seofangfa.com/proxy/2017-03-27.html",
-        "https://seofangfa.com/proxy/2017-03-26.html",
-        "https://seofangfa.com/proxy/2017-03-24.html",
-        "https://seofangfa.com/proxy/2017-03-23.html",
-        "https://seofangfa.com/proxy/2017-03-22.html",
-        "https://seofangfa.com/proxy/2017-03-17.html",
-        "https://seofangfa.com/proxy/2017-03-16.html",
-        "https://seofangfa.com/proxy/2017-03-15.html",
-        "https://seofangfa.com/proxy/2017-03-14.html",
-        "https://seofangfa.com/proxy/2017-03-13.html",
-        "https://seofangfa.com/proxy/2017-03-12.html",
-        "https://seofangfa.com/proxy/2017-03-11.html",
-        "https://seofangfa.com/proxy/2017-03-10.html",
-        "https://seofangfa.com/proxy/2017-03-09.html",
-
     ]
-    proxys = []
+
+    # f = open("./fangfaboke_ip.txt","w")
+
     for url in urls:
+        proxys = []
         soup = BeautifulSoup(get_html(url))
         trs = soup.find_all("tr")
         for tr in trs:
@@ -266,23 +254,34 @@ def fetch_fangfaboke():
                 else:
                     break
             ip_port = ip + ":" + port
-            proxys.append(ip_port)
-    useFullIp = testIp(proxys)
-    print len(useFullIp)
-    print useFullIp
-    f = open("./fangfaboke_ip.txt","w")
-    for each in useFullIp:
-        f.write(each + "\n")
+            if ip != 'IP':
+                proxys.append(ip_port)
+
+        useFullIp = testIp(proxys, 0,5)
+        # for each in useFullIp:
+            # f.write(each.encode('utf-8') + "\n")
+        # print "finish url: ", url
+
     return useFullIp
 
 
 #测试代理IP是否可用,传入ip列表，返回可用ip列表
-def testIp(ip_list):
+def testIp(ip_list, timeout=0.5):
     useFullIp = []
     for ip in ip_list:
-        response = urllib.urlopen('https://www.baidu.com/',proxies={'https//':ip})
-        if response.getcode()==200:
-            useFullIp.append(ip)
+        # response = urllib.urlopen('https://www.baidu.com/',proxies={'https//':ip})
+        # if response.getcode()==200:
+
+        # print ip,
+        try:
+            res = requests.get("http://www.baidu.com", proxies={'http':ip}, timeout=timeout)
+            if res.status_code == 200:
+                useFullIp.append(ip)
+                print ip, " good"
+            # else:
+                # print " bad"
+        except:
+            pass
     return useFullIp
 
 
@@ -295,13 +294,16 @@ def NEWHTTPS():
     ip6 = fetch_swei360()
     ip7 = fetch_ip3366()
     ip8 = fetch_mimiip()
-    # ip9 = fetch_ip84()
-    https_list = list(set(ip1+ip2+ip3+ip4+ip5+ip6+ip7+ip8))
-    print https_list
-    # ip2db(map(lambda x:x.strip(),https_list))
+    ip9 = fetch_fangfaboke()
+    https_list = list(set(ip1+ip2+ip3+ip4+ip5+ip6+ip7+ip8+i9))
+
+    f = open("web_proxy_ip.txt","w")
+    for ip in https_list:
+        f.write(ip.encode('utf-8') + '\n')    
+
     print('HTTPS Proxy Ip is OK ...%s'%len(https_list))
 
 
 if __name__ == '__main__':
-    # NEWHTTPS()
-    fetch_fangfaboke()
+    NEWHTTPS()
+    # fetch_fangfaboke()
