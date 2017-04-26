@@ -2,12 +2,16 @@
 import urllib2
 from bs4 import BeautifulSoup
 import re
+import requests
 
 def fenlei():
     fenleiList = []
     url = 'https://baike.baidu.com/'
     result = urllib2.urlopen(url).read()
-    html_doc = unicode(result).encode('UTF-8')
+    # windows
+    # html_doc = unicode(result).encode('utf-8')
+    #linux
+    html_doc = result
     soup = BeautifulSoup(html_doc,'html.parser')
     columns = soup.find_all('div',class_ = 'column')
     for column in columns:
@@ -25,8 +29,11 @@ def start_urls():
     fenleiList = fenlei()
     # for fenlei in fenlei():
     for full_url in fenleiList:
-        result = urllib2.urlopen(full_url).read()
-        html_doc = unicode(result).encode('UTF-8')
+        result = urllib2.urlopen(full_url.encode('utf-8')).read()
+        # windows
+        # html_doc = unicode(result).encode('UTF-8')
+        #linux
+        html_doc = result
         soup = BeautifulSoup(html_doc,'html.parser')
         urls = soup.find_all('a',href=re.compile(r'/view/\d+\.htm'))
         for url in urls:
@@ -35,3 +42,5 @@ def start_urls():
             start_urls.append('http://baike.baidu.com' + url['href'])
     print 'collect start_urls end'
     return start_urls
+if __name__ == '__main__':
+    start_urls()

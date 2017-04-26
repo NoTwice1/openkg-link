@@ -5,6 +5,8 @@ import threading
 import math
 import re
 import time
+
+import datetime
 import requests
 from bs4 import BeautifulSoup
 from twisted.internet import defer
@@ -15,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class AutoProxyMiddleware(object):
-
-    EXCEPTIONS_TO_CHANGE = (defer.TimeoutError, TimeoutError, ConnectionRefusedError, ConnectError, ConnectionLost, TCPTimedOutError, ConnectionDone)
+    EXCEPTIONS_TO_CHANGE = (
+        defer.TimeoutError, TimeoutError, ConnectionRefusedError, ConnectError, ConnectionLost, TCPTimedOutError,
+        ConnectionDone)
 
     _settings = [
         ('enable', True),
@@ -69,7 +72,8 @@ class AutoProxyMiddleware(object):
 
         if response.status in self.ban_code:
             self.invaild_proxy(request.meta['proxy'])
-            logger.debug("Proxy[%s] ban because return httpstatuscode:[%s]. ", request.meta['proxy'], str(response.status))
+            logger.debug("Proxy[%s] ban because return httpstatuscode:[%s]. ", request.meta['proxy'],
+                         str(response.status))
             new_request = request.copy()
             new_request.dont_filter = True
             return new_request
@@ -215,7 +219,7 @@ class AutoProxyMiddleware(object):
                     if self._has_valid_proxy():
                         break
                 if self._has_valid_proxy():
-                        break
+                    break
 
     def _has_valid_proxy(self):
         if self.len_valid_proxy() >= self.init_valid_proxys:
@@ -258,7 +262,6 @@ class ProxyValidate(threading.Thread):
 
 
 class ProxyFecth(threading.Thread):
-
     def __init__(self, proxyes, url):
         super(ProxyFecth, self).__init__()
         self.proxyes = proxyes
@@ -275,7 +278,7 @@ class ProxyFecth(threading.Thread):
                 soup = self.get_soup(url + str(i))
                 trs = soup.find("table", attrs={"id": "ip_list"}).find_all("tr")
                 for i, tr in enumerate(trs):
-                    if(0 == i):
+                    if (0 == i):
                         continue
                     tds = tr.find_all('td')
                     ip = tds[1].text
@@ -328,50 +331,46 @@ class ProxyFecth(threading.Thread):
 
         return proxyes
 
+    def getSeofangfaUrl(self):
+        today = datetime.datetime.today()
+        for i in range(1, 12):
+            url = 'https://seofangfa.com/proxy/%s.html' % (today - datetime.timedelta(i))
+            yield url
+
     def fecth_proxy_from_seofangfa(self):
         proxyes = {}
         try:
-            urls = ['https://seofangfa.com/proxy/2017-04-21.html',
-                    'https://seofangfa.com/proxy/2017-04-20.html',
-                    'https://seofangfa.com/proxy/2017-04-19.html',
-                    'https://seofangfa.com/proxy/2017-04-18.html',
-                    'https://seofangfa.com/proxy/2017-04-17.html',
-                    'https://seofangfa.com/proxy/2017-04-16.html',
-                    'https://seofangfa.com/proxy/2017-04-15.html',
-                    'https://seofangfa.com/proxy/2017-04-14.html',
-                    'https://seofangfa.com/proxy/2017-04-13.html',
-                    'https://seofangfa.com/proxy/2017-04-12.html',
-                    'https://seofangfa.com/proxy/2017-04-11.html',
-            ]
             # current= time.localtime()
             # mon = str(current.tm_mon)
             # if int(mon) < 10:
             #     mon = '0'+ mon
             # index = str(current.tm_year) + '-' + mon + '-'
             # day = current.tm_mday
-            for url in urls:
+            for url in self.getSeofangfaUrl():
                 # if day - i < 10:
                 #     index += '0'
                 # url = "https://seofangfa.com/proxy/%s.html"%(index+str(day - i))
-                User_Agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.221 Safari/537.36 SE 2.X MetaSr 1.0'
-                html_doc = requests.get(url,headers = {'User-Agent':User_Agent}).text
+                User_Agent = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) ' \
+                             'Chrome/49.0.2623.221 Safari/537.36 SE 2.X MetaSr 1.0 '
+                html_doc = requests.get(url, headers={'User-Agent': User_Agent}).text
                 soup = BeautifulSoup(html_doc, "html.parser")
                 trs = soup.findAll('tr')
-                for i in range(1,len(trs)):
+                for i in range(1, len(trs)):
                     tds = trs[i].findAll("td")
                     ip = tds[0].get_text().strip().encode('utf-8')
                     port = tds[1].get_text().strip().encode('utf-8')
                     proxy = ''.join(['http://', ip, ':', port])
                     # proxies.append(ip_port)
                     proxyes[proxy] = False
+                # print 'fangfa end'
         except Exception as e:
             logger.error('Failed to fecth_proxy_from_seofangfa. Exception[%s]', e)
         return proxyes
 
-
     def get_soup(self, url):
         request = urllib2.Request(url)
-        request.add_header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36")
+        request.add_header("User-Agent",
+                           "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36")
         html_doc = urllib2.urlopen(request).read()
 
         soup = BeautifulSoup(html_doc, "lxml")
@@ -380,5 +379,4 @@ class ProxyFecth(threading.Thread):
 
 
 if __name__ == '__main__':
-
     AutoProxyMiddleware()
