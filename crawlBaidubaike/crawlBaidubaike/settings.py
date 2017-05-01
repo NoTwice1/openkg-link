@@ -53,15 +53,15 @@ FEED_EXPORT_ENCODING = 'utf-8'
 
 # Enable or disable downloader middlewares
 # See http://scrapy.readthedocs.org/en/latest/topics/downloader-middleware.html
-DOWNLOADER_MIDDLEWARES = {
-   'crawlBaidubaike.autoproxy.AutoProxyMiddleware': 543,
-}
+# DOWNLOADER_MIDDLEWARES = {
+#    'crawlBaidubaike.autoproxy.AutoProxyMiddleware': 543,
+# }
 
 # Enable or disable extensions
 # See http://scrapy.readthedocs.org/en/latest/topics/extensions.html
-#EXTENSIONS = {
-#    'scrapy.extensions.telnet.TelnetConsole': None,
-#}
+EXTENSIONS = {
+   'scrapy.extensions.telnet.TelnetConsole': None,
+}
 
 # Configure item pipelines
 # See http://scrapy.readthedocs.org/en/latest/topics/item-pipeline.html

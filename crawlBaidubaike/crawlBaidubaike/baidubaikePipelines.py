@@ -1,11 +1,8 @@
 # -*- coding:utf-8 -*-
 
 # 引入文件
-import json
+import simplejson as json
 import codecs
-
-import time
-
 
 class BaidubaikePipelines(object):
     # 该方法用于处理数据
@@ -18,13 +15,16 @@ class BaidubaikePipelines(object):
         line = json.dumps(dict(item), ensure_ascii=False) + "\n"
         # 写入文件
         self.file.write(line)
-        print time.ctime() + '-' * 5 + 'crawl %d :%s-----%s' % (item['count'], item['title'], item['url'])
+        print 'saved :%s-----%s' % (item['title'], item['url'])
         # 返回item
         return item
 
     # 该方法在spider被开启时被调用。
     def open_spider(self, spider):
+        #win
         self.file = codecs.open('baidubaikeItem.json', 'a', "utf-8")
+        #aliyun
+        # self.file = codecs.open('/mnt/baidubaikeItem.json', 'a', "utf-8")
 
     # 该方法在spider被关闭时被调用。
     def close_spider(self, spider):

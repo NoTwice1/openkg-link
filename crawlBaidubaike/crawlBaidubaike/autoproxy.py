@@ -332,9 +332,10 @@ class ProxyFecth(threading.Thread):
         return proxyes
 
     def getSeofangfaUrl(self):
-        today = datetime.datetime.today()
+        today = datetime.date.today()
         for i in range(1, 12):
             url = 'https://seofangfa.com/proxy/%s.html' % (today - datetime.timedelta(i))
+            print url
             yield url
 
     def fecth_proxy_from_seofangfa(self):
