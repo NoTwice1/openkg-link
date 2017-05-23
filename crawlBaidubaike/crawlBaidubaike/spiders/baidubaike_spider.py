@@ -6,7 +6,7 @@ import urllib
 import thread
 import urllib2
 import time
-from collectStartUrls import start_urls
+from collectStartUrls import read_urls
 from crawlBaidubaike.baidubaikeItem import BaidubaikeItem
 
 BAIDUBAIKE_ERROR_URL = 'http://baike.baidu.com/error.html'
@@ -20,7 +20,9 @@ class BaidubaikeSpider(scrapy.Spider):
     # 设定域名
     allowed_domains = ["baike.baidu.com"]
     # 填写爬取地址
-    start_urls = start_urls()
+    start_urls = read_urls()
+
+    # start_urls = [STRAT_UIL, ]
 
     def __init__(self):
         # self.proxies = self.load_proxies()
@@ -35,26 +37,21 @@ class BaidubaikeSpider(scrapy.Spider):
 
     # 编写爬取方法
     def parse(self, response):
+        print 'req : %s,res : %s,status:%d' % (response.request, response.url, response.status)
         self.crawlingCount += 1
-        # self.count += 1
-        # if self.count == 20:
-        #     self.change_proxy()
-        #     self.count = 0
+
         # 实例一个容器保存爬取的信息
         baidubaikeItem = BaidubaikeItem()
         # 这部分是爬取部分，使用xpath的方式选择信息，具体方法根据网页结构而定
-        # 先获取每个课程的div
-        # print '----------------------------------------------'
+
+        # url
         url = response.url
         if url == BAIDUBAIKE_ERROR_URL or url == BAIDUBAIKE_ROOT_URL:
             print 'r.url = ' + url + 'invalid'
             return
         baidubaikeItem['url'] = url
-        print time.ctime()+'--------------crawl %d : %s' % (self.crawlingCount, url)
 
-        # self.new_url_list.remove(url)
-        # self.old_url_list.add(url)
-
+        # title
         titleNode = response.xpath('.//dd[@class="lemmaWgt-lemmaTitle-title"]')
         h1 = titleNode.xpath('.//h1/text()').extract()[0]
         title = h1
@@ -62,59 +59,109 @@ class BaidubaikeSpider(scrapy.Spider):
         if len(h2) > 0:
             h2 = h2[0]
             title += h2
+        # print title
         baidubaikeItem['title'] = title
 
+        # # main_content
+        # main_content = response.xpath('.//div[@class="main-content"]').extract()
+        # baidubaikeItem['main_content'] = main_content
+        # baidubaikeItem['count'] = self.crawlingCount
+
+        # summary
+        summaryNode = response.xpath('.//div[@class="lemma-summary"]')
+        if len(summaryNode) != 0:
+            summaries = summaryNode.xpath('.//text()').extract()
+            summary = ''
+            for i in summaries:
+                summary += i.strip()
+            baidubaikeItem['summary'] = summary
+        else:
+            baidubaikeItem['summary'] = None
+
+        # content
         paras = response.xpath('.//div[@class="para"]')
         content = ''
-        for para in paras:
-            texts = para.xpath('./text()').extract()
-            for text in texts:
-                content += text
-        # print content
-        baidubaikeItem['content'] = content
+        if len(paras) != 0:
+            for para in paras:
+                texts = para.xpath('.//text()').extract()
+                for text in texts:
+                    content += text
+            baidubaikeItem['content'] = content
+        else:
+            baidubaikeItem['content'] = None
+
+        # infobox
+        infobox = {}
+        infoboxNode = response.xpath('.//div[@class="basic-info cmn-clearfix"]')
+        if len(infoboxNode) != 0:
+            infobox_names = infoboxNode.xpath('.//dt//text()').extract()
+            infobox_valuesNode = infoboxNode.xpath('.//dd')
+            infobox_values = []
+            for i in infobox_valuesNode:
+                l = i.xpath('.//text()').extract()
+                value = ''
+                for j in l:
+                    value = value + j.strip()
+                infobox_values.append(value.encode('utf-8'))
+            for i in range(len(infobox_names)):
+                infobox[infobox_names[i].strip()] = infobox_values[i].strip()
+            baidubaikeItem['infobox'] = infobox
+        else:
+            # print 'no infobox'
+            baidubaikeItem['infobox'] = None
+
+        # category
+        categoryNode = response.xpath('//div[@class="lemmaWgt-lemmaCatalog"]')
+        if len(categoryNode) != 0:
+            category = categoryNode.xpath('.//a//text()').extract()
+            baidubaikeItem['category'] = category
+        else:
+            # print 'no category'
+            baidubaikeItem['category'] = None
+
+        # reference
+        reference = {}
+        referenceNode = response.xpath('//li[@class="reference-item "]//a[@rel="nofollow"]')
+        if len(referenceNode) != 0:
+            for i in referenceNode:
+                name = i.xpath('.//text()')[0].extract()
+                link = i.xpath('.//@href')[0].extract()
+                reference[name] = link
+                baidubaikeItem['reference'] = reference
+        else:
+            # print 'no reference'
+            baidubaikeItem['reference'] = None
+
+        # tag
+        tag = []
+        tagNode = response.xpath('//span[@class="taglist"]//text()').extract()
+        if len(tagNode) != 0:
+            for i in tagNode:
+                if i.strip() != ',':
+                    tag.append(i.strip())
+            baidubaikeItem['tag'] = tag
+        else:
+            # print 'no tag'
+            baidubaikeItem['tag'] = None
+
+        # image_url
+        image_urlNode = response.xpath('//div[@class="summary-pic"]//img//@src')
+        if len(image_urlNode) != 0:
+            image_url = image_urlNode[0].extract()
+            baidubaikeItem['image_url'] = image_url
+        else:
+            baidubaikeItem['image_url'] = None
+        image_urlNode = response.xpath('//div[@class="summary-pic"]//img//@src').extract()
+        baidubaikeItem['image_url'] = image_urlNode
+
+        # inner_related_urls
+        urls = response.xpath("//a[contains(@href,'/item/')]/@href").extract()
+        baidubaikeItem['inner_related_urls'] = urls
+        print time.ctime() + '-' * 5 + str(self.crawlingCount)
         yield baidubaikeItem
 
-        # print '-----------------------------------------------------------------'
-
-        urls = response.xpath("//a[contains(@href,'/item/')]/@href").extract()
         for url in urls:
             # 将信息组合成下一页的url
-            # if url in self.new_url_list or url in self.new_url_list:
-            #     continue
             page = response.urljoin(url)
-            # print urllib.unquote(page)
             # 返回url
             yield scrapy.Request(page, callback=self.parse)
-
-    # def fenlei(self):
-    #     fenleiList = []
-    #     url = 'https://baike.baidu.com/'
-    #     result = urllib2.urlopen(url).read()
-    #     html_doc = unicode(result).encode('UTF-8')
-    #     soup = BeautifulSoup(html_doc,'html.parser')
-    #     columns = soup.find_all('div',class_ = 'column')
-    #     for column in columns:
-    #         hrefs = column.find_all('a')
-    #         for href in hrefs:
-    #             url = href['href']
-    #             full_url = "http://baike.baidu.com"+ url
-    #             # print full_url
-    #         fenleiList.append(full_url)
-    #             # yield full_url
-    #     return fenleiList
-
-    # def start_urls(self):
-    #     start_urls = []
-    #     fenleiList = self.fenlei()
-    #     # for fenlei in fenlei():
-    #     for full_url in fenleiList:
-    #         result = urllib2.urlopen(full_url).read()
-    #         html_doc = unicode(result).encode('UTF-8')
-    #         soup = BeautifulSoup(html_doc,'html.parser')
-    #         urls = soup.find_all('a',href=re.compile(r'/view/\d+\.htm'))
-    #         for url in urls:
-    #             # yield 'http://baike.baidu.com' + url['href']
-    #             print 'http://baike.baidu.com' + url['href']
-    #             start_urls.append('http://baike.baidu.com' + url['href'])
-    #     print 'collect start_urls end'
-    #     return start_urls
